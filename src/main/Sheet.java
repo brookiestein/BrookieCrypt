@@ -46,9 +46,10 @@ class PrincipalSheet extends JPanel
 	private JMenu mFile, mTools, mHelp;
 	private JMenuItem iExit, iCrypt, iDCrypt, iAbout;
 	private JPanel s;
+	private Encrypt ec;
 	
 	public PrincipalSheet()
-	{
+	{		
 		listener = new EventManager();
 		setLayout(new BorderLayout());
 		setFocusable(true);
@@ -102,6 +103,8 @@ class PrincipalSheet extends JPanel
 		bar.add(mFile);
 		bar.add(mTools);
 		bar.add(mHelp);
+		
+		ec = new Encrypt();
 
 		s = new JPanel(null);
 		s.add(text);
@@ -122,9 +125,9 @@ class PrincipalSheet extends JPanel
 			if (e.isControlDown() && e.getKeyCode() == KeyEvent.VK_Q) {
 				exit();
 			} else if (e.isControlDown() && e.getKeyCode() == KeyEvent.VK_E) {
-				Encrypt.encrypt();
+				ec.encrypt();
 			} else if (e.isControlDown() && e.getKeyCode() == KeyEvent.VK_D) {
-				Encrypt.decrypt();
+				ec.decrypt();
 			} else if (e.isControlDown() && e.getKeyCode() == KeyEvent.VK_I) {
 				showInfo();
 			}
@@ -135,9 +138,9 @@ class PrincipalSheet extends JPanel
 			if (e.getSource().equals(iExit) || e.getSource().equals(bExit)) {
 				exit();
 			} else if (e.getSource().equals(iCrypt) || e.getSource().equals(bCrypt)) {
-				Encrypt.encrypt();
+				ec.encrypt();
 			} else if (e.getSource().equals(iDCrypt) || e.getSource().equals(bDCrypt)) {
-				Encrypt.decrypt();
+				ec.decrypt();
 			} else {
 				showInfo();
 			}

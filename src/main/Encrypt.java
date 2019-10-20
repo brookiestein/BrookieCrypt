@@ -18,38 +18,99 @@
 package main;
 
 // Paquetes IO
+import java.io.Closeable;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+
+// Paquetes ZIP
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 // Paquetes SWING
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 
-public class Encrypt
+public class Encrypt implements Closeable
 {
-	private static File file = null;
-	public static void encrypt()
+	private static File file;
+	private static ZipOutputStream zipStream;
+	private static ZipEntry zipEntry;
+	private static FileInputStream fileInput;
+	private static FileOutputStream fileOutput;
+
+	public Encrypt()
+	{
+		file = null;
+		zipStream = null;
+		zipEntry = null;
+		fileInput = null;
+		fileOutput = null;
+	}
+	
+	private boolean compress()
 	{
 		boolean status = openFile();
 		if (status) {
-			
+			String filename = file.getName();
+			String ext = filename.substring(filename.lastIndexOf('.'), filename.length());
+			try {
+				fileOutput = new FileOutputStream(file.getAbsolutePath().replace(ext, ".zip"));
+				zipStream = new ZipOutputStream(fileOutput);
+				zipEntry = new ZipEntry(filename);
+				try {
+					zipStream.putNextEntry(zipEntry);
+				} catch (IOException ex) {
+					ex.printStackTrace();
+				}
+				fileInput = new FileInputStream(file.getAbsolutePath());
+				int read;
+				byte[] buffer = new byte[1024];
+				try {
+					while (0 < (read = fileInput.read(buffer))) {
+						zipStream.write(buffer, 0, read);
+					}
+					close();
+					JOptionPane.showMessageDialog(new PrincipalSheet(), "El archivo ha sido comprimido.",
+					"Aviso", JOptionPane.INFORMATION_MESSAGE);
+				} catch (IOException e) {
+					JOptionPane.showMessageDialog(new PrincipalSheet(), "Ocurrió un error mientras se leía " +
+					"el archivo.", "Error", JOptionPane.ERROR_MESSAGE);
+				}
+			} catch (FileNotFoundException e) {
+				JOptionPane.showMessageDialog(new PrincipalSheet(), "Archivo no encontrado",
+				"Error", JOptionPane.ERROR_MESSAGE);
+			}
+			return true;
+		} else {
+			return false;
 		}
 	}
-	
-	public static void decrypt()
+
+	public void encrypt()
 	{
-		boolean status = openFile();
+		boolean status = compress();
 		if (status) {
 			
+		} else {
+			JOptionPane.showMessageDialog(new PrincipalSheet(), "Ocurrió un error en la compresión",
+			"Error", JOptionPane.ERROR_MESSAGE);
 		}
 	}
 	
-	private static boolean openFile()
+	public void decrypt()
+	{
+		
+	}
+	
+	private boolean openFile()
 	{
 		JFileChooser chooser;
 		String path = "";
 		if (System.getProperty("os.name").substring(0, 5).equalsIgnoreCase("windo")) {
-			path = "C:/Users/" + System.getProperty("user.name") + "/Documents";
+			path = "C:/Users/" + System.getProperty("user.name") + "/Desktop";
 		} else if (System.getProperty("os.name").substring(0, 5).equalsIgnoreCase("linux")) {
 			path = "/home/" + System.getProperty("user.name");
 		}
@@ -70,5 +131,18 @@ public class Encrypt
 			}
 		}
 		return true;
+	}
+	
+	public void close()
+	{
+		try {
+			fileInput.close();
+			zipStream.closeEntry();
+			zipStream.close();
+			fileOutput.close();
+		} catch (Exception e) {
+			JOptionPane.showMessageDialog(new PrincipalSheet(), "Ocurrió un error mientras se intentaba " +
+			"cerrar el archivo.", "Error", JOptionPane.ERROR_MESSAGE);
+		}
 	}
 }
