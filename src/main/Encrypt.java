@@ -18,119 +18,100 @@
 package main;
 
 // Paquetes IO
-import java.io.Closeable;
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 
-// Paquetes NIO
-import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.attribute.BasicFileAttributes;
-
-// Paquetes ZIP
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
+// Paquetes UTIL
+import java.util.ArrayList;
 
 // Paquetes SWING
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 
-public class Encrypt implements Closeable
-{
-	private static File file;
-	private static ZipOutputStream zipStream;
-	private static ZipEntry zipEntry;
-	private static FileInputStream fileInput;
-	private static FileOutputStream fileOutput;
+// Paquetes NET
+import net.lingala.zip4j.core.ZipFile;
+import net.lingala.zip4j.exception.ZipException;
+import net.lingala.zip4j.model.ZipParameters;
+import net.lingala.zip4j.util.Zip4jConstants;
 
+public class Encrypt
+{
+	private File file;
+	private String ext;
+	private ZipFile zipFile;
+	private ZipParameters zipParameters;
+	
 	public Encrypt()
 	{
+		ext = null;
 		file = null;
-		zipStream = null;
-		zipEntry = null;
-		fileInput = null;
-		fileOutput = null;
+		zipFile = null;
+		zipParameters = null;
 	}
 	
-	private boolean compress()
+	private void compress() throws ZipException
 	{
 		boolean status = openFile();
 		if (status) {
-			
-			if (file.isDirectory()) {
-				try {
-					compressFolder(Paths.get(file.getAbsolutePath()), Paths.get(file.getAbsolutePath() + ".zip"));
-					close();
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
+			ArrayList<File> files = null;
+			String message;
+			if (file.isFile()) {
+				zipFile = new ZipFile(file.getAbsolutePath().replace(ext, ".zip"));
 			} else {
-				String filename = file.getName();
-				String ext = "";
-				ext = filename.substring(filename.lastIndexOf('.'), filename.length());
-				try {
-					fileOutput = new FileOutputStream(file.getAbsolutePath().replace(ext, ".zip"));
-					zipStream = new ZipOutputStream(fileOutput);
-					zipStream.setLevel(9);
-					zipEntry = new ZipEntry(filename);
-	
-					try {
-						zipStream.putNextEntry(zipEntry);
-					} catch (IOException ex) {
-						ex.printStackTrace();
-					}
-					
-					fileInput = new FileInputStream(file.getAbsolutePath() + ".zip");
-	
-					int read;
-					byte[] buffer = new byte[1024];
-					try {
-						while (0 < (read = fileInput.read(buffer))) {
-							zipStream.write(buffer, 0, read);
-						}
-						close();
-						JOptionPane.showMessageDialog(new PrincipalSheet(), "El archivo ha sido comprimido.", "Aviso",
-						JOptionPane.INFORMATION_MESSAGE);
-					} catch (IOException e) {
-						JOptionPane.showMessageDialog(new PrincipalSheet(), "Ocurrió un error mientras se leía " +
-						"el archivo.", "Error", JOptionPane.ERROR_MESSAGE);
-					}
-				} catch (FileNotFoundException e) {
-					JOptionPane.showMessageDialog(new PrincipalSheet(), "Archivo no encontrado",
-					"Error", JOptionPane.ERROR_MESSAGE);
+				files = new ArrayList<File>();
+				File[] listFiles = file.listFiles();
+				zipFile = new ZipFile(file.getAbsolutePath() + ".zip");
+				for (int i=0; i<listFiles.length; i++) {
+					files.add(listFiles[i]);
 				}
 			}
+			zipParameters = new ZipParameters();
+			zipParameters.setCompressionMethod(Zip4jConstants.COMP_DEFLATE);
+			zipParameters.setCompressionLevel(Zip4jConstants.DEFLATE_LEVEL_NORMAL);
+			zipParameters.setEncryptFiles(true);
+			zipParameters.setEncryptionMethod(Zip4jConstants.ENC_METHOD_AES);
+			zipParameters.setAesKeyStrength(Zip4jConstants.AES_STRENGTH_256);
+			zipParameters.setPassword(GetPassword());
+			if (file.isFile()) {
+				zipFile.addFile(file, zipParameters);
+				message = "El archivo ha sido comprimido.";
+			} else {
+				zipFile.addFolder(file.getAbsoluteFile(), zipParameters);
+				message = "La carpeta ha sido comprimida.";
+			}
+			JOptionPane.showMessageDialog(new PrincipalSheet(), message, "Enhorabuena", JOptionPane.INFORMATION_MESSAGE);
 		}
-		return true;
 	}
 	
-	private void compressFolder(Path sourceFolder, Path zipPath) throws Exception
+	private String GetPassword()
 	{
-		fileOutput = new FileOutputStream(zipPath.toFile());
-		zipStream = new ZipOutputStream(fileOutput);
-		zipStream.setLevel(9);
-		Files.walkFileTree(sourceFolder, new SimpleFileVisitor<Path>()
-		{
-			public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException
-			{
-				zipStream.putNextEntry(zipEntry = new ZipEntry(sourceFolder.relativize(file).toString()));
-				Files.copy(file, zipStream);
-				return FileVisitResult.TERMINATE;
+		PrincipalSheet s = new PrincipalSheet();
+		String password;
+		final String error = "La contraseña es demasiado débil.";
+		final String message = "Introduzca la contraseña para el cifrado y compresión ZIP:";
+		final String title = "Establecer contraseña";
+		while (true) {
+			password = JOptionPane.showInputDialog(s, message, title, JOptionPane.PLAIN_MESSAGE);
+			if (password.length() <= 8) {
+				JOptionPane.showMessageDialog(s, error, "Error", JOptionPane.ERROR_MESSAGE);
+			} else {
+				return password;
 			}
-		});
+		}
 	}
 
 	public void encrypt()
 	{
-		boolean status = compress();
-		if (status) {
-			
+		String messageError = "Ocurrió un error mientras se comprimía ";
+		try {
+			compress();
+		} catch (ZipException e) {
+			if (file.isFile()) {
+				messageError += "el archivo.";
+			} else {
+				messageError += "la carpeta.";
+			}
+			JOptionPane.showMessageDialog(new PrincipalSheet(), messageError, "Error", JOptionPane.ERROR_MESSAGE);
 		}
 	}
 	
@@ -166,27 +147,10 @@ public class Encrypt implements Closeable
 				return false;
 			}
 		}
-		return true;
-	}
-	
-	public void close()
-	{
-		try {
-			if (fileInput != null) {
-				fileInput.close();
-			}
-			
-			if (zipStream != null) {
-				zipStream.closeEntry();
-				zipStream.close();
-			}
-			
-			if (fileOutput != null) {
-				fileOutput.close();
-			}
-		} catch (Exception e) {
-			JOptionPane.showMessageDialog(new PrincipalSheet(), "Ocurrió un error mientras se intentaba " +
-			"cerrar el archivo.", "Error", JOptionPane.ERROR_MESSAGE);
+
+		if (file.isFile()) {
+			ext = file.getAbsolutePath().substring(file.getAbsolutePath().lastIndexOf('.'), file.getAbsolutePath().length());
 		}
+		return true;
 	}
 }

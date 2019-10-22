@@ -17,14 +17,20 @@
 */
 package main;
 
+// Paquetes UTIL
+import java.util.ArrayList;
+
+// Paquetes AWT
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 
+// Paquetes SWING
 import javax.swing.JButton;
 import javax.swing.JLabel;
+import javax.swing.JComboBox;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
@@ -40,13 +46,16 @@ class PrincipalSheet extends JPanel
 	private static final String author = "Lord Brookie";
 
 	private EventManager listener;
-	private JButton bExit, bCrypt, bDCrypt;
 	private JLabel text;
 	private JMenuBar bar;
-	private JMenu mFile, mTools, mHelp;
-	private JMenuItem iExit, iCrypt, iDCrypt, iAbout;
+	private ArrayList<JMenu> menu;
+	private ArrayList<JMenuItem> items;
+	private JComboBox<String> combo;
 	private JPanel s;
 	private Encrypt ec;
+	private JButton enter;
+	private final String crypt = "Cifrar un archivo o directorio";
+	private final String decrypt = "Descifrar un archivo";
 	
 	public PrincipalSheet()
 	{		
@@ -55,67 +64,62 @@ class PrincipalSheet extends JPanel
 		setFocusable(true);
 		addKeyListener(listener);
 		
-		bExit = new JButton("Salir");
-		bExit.addActionListener(listener);
-		bExit.addKeyListener(listener);
-		bExit.setBounds(400, 195, 60, 25);
-		
-		bCrypt = new JButton("Cifrar un archivo o directorio");
-		bCrypt.addActionListener(listener);
-		bCrypt.addKeyListener(listener);
-		bCrypt.setBounds(230, 160, 200, 25);
-		
-		bDCrypt = new JButton("Descifrar un archivo");
-		bDCrypt.addActionListener(listener);
-		bDCrypt.addKeyListener(listener);
-		bDCrypt.setBounds(440, 160, 150, 25);
-		
 		text = new JLabel("¿Qué desea hacer?");
 		text.setBounds(370, 130, 150, 20);
 		
-		iExit = new JMenuItem("Salir (CTRL + Q)");
-		iExit.addActionListener(listener);
-		iExit.addKeyListener(listener);
+		items = new ArrayList<JMenuItem>();
+		addItem("Salir (CTRL + Q)");
+		addItem("Cifrar un archivo o directorio (CTRL + E)");
+		addItem(crypt);
+		addItem("Descifrar un archivo (CTRL + D)");
+		addItem(decrypt);
+		addItem("Acerca de (CTRL + I)");
 		
-		iCrypt = new JMenuItem("Cifrar un archivo o directorio (CTRL + E)");
-		iCrypt.addActionListener(listener);
-		iCrypt.addKeyListener(listener);
+		combo = new JComboBox<String>();
+		combo.addItem("Nada");
+		combo.addItem(items.get(2).getText());
+		combo.addItem(items.get(4).getText());
+		combo.setBounds(280, 160, 200, 25);
+		combo.addKeyListener(listener);
 		
-		iDCrypt = new JMenuItem("Descifrar un archivo (CTRL + D)");
-		iDCrypt.addActionListener(listener);
-		iDCrypt.addKeyListener(listener);
+		enter = new JButton("Entrar");
+		enter.setBounds(490, 160, 70, 25);
+		enter.addActionListener(listener);
+		enter.addKeyListener(listener);
 		
-		iAbout = new JMenuItem("Acerca de (CTRL + I)");
-		iAbout.addActionListener(listener);
-		iAbout.addKeyListener(listener);
+		menu = new ArrayList<JMenu>();
+		menu.add(new JMenu("Archivo"));
+		menu.add(new JMenu("Herramientas"));
+		menu.add(new JMenu("Ayuda"));
 		
-		mFile = new JMenu("Archivo");
-		mFile.add(iExit);
-		
-		mTools = new JMenu("Herramientas");
-		mTools.add(iCrypt);
-		mTools.add(iDCrypt);
-		
-		mHelp = new JMenu("Ayuda");
-		mHelp.add(iAbout);
+		menu.get(0).add(items.get(0));
+		menu.get(1).add(items.get(1));
+		menu.get(1).add(items.get(3));
+		menu.get(2).add(items.get(5));
 		
 		bar = new JMenuBar();
-		bar.add(mFile);
-		bar.add(mTools);
-		bar.add(mHelp);
+		bar.add(menu.get(0));
+		bar.add(menu.get(1));
+		bar.add(menu.get(2));
 		
 		ec = new Encrypt();
 
 		s = new JPanel(null);
 		s.add(text);
-		s.add(bCrypt);
-		s.add(bDCrypt);
-		s.add(bExit);
+		s.add(combo);
+		s.add(enter);
 		s.setFocusable(true);
 		s.addKeyListener(listener);
 		
 		add(bar, BorderLayout.NORTH);
 		add(s, BorderLayout.CENTER);
+	}
+	
+	private void addItem(String name)
+	{
+		items.add(new JMenuItem(name));
+		items.get(items.size() - 1).addActionListener(listener);
+		items.get(items.size() - 1).addKeyListener(listener);
 	}
 	
 	private final class EventManager extends KeyAdapter implements ActionListener
@@ -135,12 +139,18 @@ class PrincipalSheet extends JPanel
 		
 		public void actionPerformed(ActionEvent e)
 		{
-			if (e.getSource().equals(iExit) || e.getSource().equals(bExit)) {
+			if (e.getSource().equals(items.get(0))) {
 				exit();
-			} else if (e.getSource().equals(iCrypt) || e.getSource().equals(bCrypt)) {
+			} else if (e.getSource().equals(items.get(1))) {
 				ec.encrypt();
-			} else if (e.getSource().equals(iDCrypt) || e.getSource().equals(bDCrypt)) {
+			} else if (e.getSource().equals(items.get(3))) {
 				ec.decrypt();
+			} else if (e.getSource().equals(enter)) {
+				if (combo.getSelectedItem().toString().equals(crypt)) {
+					ec.encrypt();
+				} else {
+					ec.decrypt();
+				}
 			} else {
 				showInfo();
 			}
