@@ -31,6 +31,7 @@ import java.awt.event.KeyEvent;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JComboBox;
+import javax.swing.JCheckBox;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
@@ -51,8 +52,9 @@ class PrincipalSheet extends JPanel
 	private ArrayList<JMenu> menu;
 	private ArrayList<JMenuItem> items;
 	private JComboBox<String> combo;
+	private JCheckBox checkDeleteFile;
 	private JPanel s;
-	private Encrypt ec;
+	private ManageCrypt ec;
 	private JButton enter;
 	private final String crypt = "Cifrar un archivo o directorio";
 	private final String decrypt = "Descifrar un archivo";
@@ -87,6 +89,10 @@ class PrincipalSheet extends JPanel
 		enter.addActionListener(listener);
 		enter.addKeyListener(listener);
 		
+		checkDeleteFile = new JCheckBox("Destruir archivos", true);
+		checkDeleteFile.addKeyListener(listener);
+		checkDeleteFile.setBounds(350, 190, 130, 25);
+		
 		menu = new ArrayList<JMenu>();
 		menu.add(new JMenu("Archivo"));
 		menu.add(new JMenu("Herramientas"));
@@ -102,12 +108,13 @@ class PrincipalSheet extends JPanel
 		bar.add(menu.get(1));
 		bar.add(menu.get(2));
 		
-		ec = new Encrypt();
+		ec = new ManageCrypt();
 
 		s = new JPanel(null);
 		s.add(text);
 		s.add(combo);
 		s.add(enter);
+		s.add(checkDeleteFile);
 		s.setFocusable(true);
 		s.addKeyListener(listener);
 		
@@ -130,8 +137,14 @@ class PrincipalSheet extends JPanel
 				exit();
 			} else if (e.isControlDown() && e.getKeyCode() == KeyEvent.VK_E) {
 				ec.encrypt();
+				if (checkDeleteFile.isSelected()) {
+					ec.destroyFiles();
+				}
 			} else if (e.isControlDown() && e.getKeyCode() == KeyEvent.VK_D) {
 				ec.decrypt();
+				if (checkDeleteFile.isSelected()) {
+					ec.destroyFiles();
+				}
 			} else if (e.isControlDown() && e.getKeyCode() == KeyEvent.VK_I) {
 				showInfo();
 			}
@@ -148,15 +161,21 @@ class PrincipalSheet extends JPanel
 			} else if (e.getSource().equals(enter)) {
 				if (combo.getSelectedItem().toString().equals(crypt)) {
 					ec.encrypt();
+					if (checkDeleteFile.isSelected()) {
+						ec.destroyFiles();
+					}
 				} else {
 					ec.decrypt();
+					if (checkDeleteFile.isSelected()) {
+						ec.destroyFiles();
+					}
 				}
 			} else {
 				showInfo();
 			}
 		}
 	}
-	
+
 	private void exit()
 	{
 		final String message = "¿Está seguro que desea salir?";
