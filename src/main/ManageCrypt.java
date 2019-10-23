@@ -19,14 +19,18 @@ package main;
 
 // Paquetes IO
 import java.io.File;
+import java.io.FileReader;
+import java.io.BufferedReader;
 import java.io.IOException;
 
 // Paquetes SECURITY
 import java.security.GeneralSecurityException;
+import java.security.DigestException;
 
 // Paquetes UTIL
 import java.util.ArrayList;
 import utils.FEncryptor;
+import java.util.concurrent.CancellationException;
 
 // Paquetes SWING
 import javax.swing.JFileChooser;
@@ -49,19 +53,23 @@ public class ManageCrypt
 	private String ext;
 	private ZipFile zipFile;
 	private ZipParameters zipParameters;
+	private PrincipalSheet s;
+	private static final String SHA256 = "SHA-256";
+	private static final String SHA512 = "SHA-512";
 	
-	public ManageCrypt()
+	public ManageCrypt(PrincipalSheet s)
 	{
+		this.s = s;
 		ext = null;
 		file = null;
 		zipFile = null;
 		zipParameters = null;
 	}
-	
-	private boolean compress() throws ZipException
+
+	private void compress() throws ZipException
 	{
-		boolean status = openFile("Abrir archivo o directorio para comprimir en zip", null);
-		if (status) {
+		try {
+			openFile("Abrir archivo o directorio para comprimir en zip", null);
 			String path = file.getAbsolutePath();
 			String password;
 			if (file.isFile()) {
@@ -84,18 +92,16 @@ public class ManageCrypt
 				} else {
 					zipFile.addFolder(path, zipParameters);
 				}
-				return true;
 			} else {
-				JOptionPane.showMessageDialog(new PrincipalSheet(), "Compresión cancelada.",
-				"Error", JOptionPane.INFORMATION_MESSAGE);
+				JOptionPane.showMessageDialog(s, "Compresión cancelada.", "Error", JOptionPane.INFORMATION_MESSAGE);
 			}
-		}
-		return false;
+		} catch (IOException e) {
+			JOptionPane.showMessageDialog(s, e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+		} catch (CancellationException e) {}
 	}
 
 	private void descompress()
 	{
-		PrincipalSheet s = new PrincipalSheet();
 		final String messageSuccess = "Descompresión finalizada.";
 		final String messageError = "El archivo indicado no parece ser un archivo zip válido.\n" +
 		"¿Estará corrupto?";
@@ -122,7 +128,6 @@ public class ManageCrypt
 	
 	private String GetPassword(@NonNull String message)
 	{
-		PrincipalSheet s = new PrincipalSheet();
 		ArrayList<String> messages = new ArrayList<String>();
 		messages.add("La contraseña es demasiado débil.");
 		messages.add(message);
@@ -137,17 +142,26 @@ public class ManageCrypt
 			}
 		}
 	}
+	
+	private void generateSum(String algorithm)
+	{
+		try {
+			String path = file.getAbsolutePath();
+			String ext = path.substring(path.lastIndexOf('.'), path.length());
+			ManageHash hash = new ManageHash(algorithm, new File(path.replace(ext, ".enc")), s);
+			hash.createHash();
+			hash.saveHash();
+		} catch (IOException e) {
+			JOptionPane.showMessageDialog(s, e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+		}
+	}
 
 	public void encrypt()
 	{
 		String messageError = "Ocurrió un error mientras se comprimía ";
 		final String messageSuccess = "El archivo ha sido cifrado.";
-		PrincipalSheet s = new PrincipalSheet();
 		try {
-			boolean status = compress();
-			if (!status) {
-				return;
-			}
+			compress();
 			String path = file.getAbsolutePath();
 			File destFile;
 			if (file.isFile()) {
@@ -163,6 +177,8 @@ public class ManageCrypt
 			String password = GetPassword("Introduzca la contraseña para el cifrado:");
 			FEncryptor fe = new FEncryptor(password);
 			fe.encrypt(file, destFile);
+			generateSum(SHA256);
+			generateSum(SHA512);
 			JOptionPane.showMessageDialog(s, messageSuccess, "Enhorabuena", JOptionPane.INFORMATION_MESSAGE);
 		} catch (ZipException e) {
 			if (file.isFile()) {
@@ -177,17 +193,69 @@ public class ManageCrypt
 			JOptionPane.showMessageDialog(s, e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
 		}
 	}
+
+	private void verifySums() throws IOException, DigestException
+	{
+		String path = file.getAbsolutePath();
+		ext = path.substring(path.lastIndexOf('.'), path.length());
+
+		File filesha256 = new File(path.replace(ext, ".sha256sum"));
+		File filesha512 = new File(path.replace(ext, ".sha512sum"));
+
+		if (!filesha256.exists() || !filesha512.exists()) {
+			throw new IOException("Archivo(s) de firma hash no encontrado(s).");
+		}
+
+		FileReader fr256 = new FileReader(filesha256);
+		BufferedReader br256 = new BufferedReader(fr256);
+		String tmp, read256 = null;
+		
+		FileReader fr512 = new FileReader(filesha512);
+		BufferedReader br512 = new BufferedReader(fr512);
+		String read512 = null;
+
+		while ((tmp = br256.readLine()) != null) {
+			if (tmp != null) {
+				read256 = tmp;
+			}
+		}
+		while ((tmp = br512.readLine()) != null) {
+			if (tmp != null) {
+				read512 = tmp;
+			}
+		}
+
+		ManageHash hash = new ManageHash();
+		hash.setFile(file);
+		hash.setAlgorithm(SHA256);
+		hash.setParent(s);
+		hash.createHash();
+		String originalHash = hash.getHash();
+		if (originalHash.equals(read256)) {
+			hash.setAlgorithm(SHA512);
+			hash.createHash();
+			originalHash = hash.getHash();
+			if (originalHash.equals(read512)) {
+				br256.close();
+				br512.close();
+			} else {
+				br256.close();
+				br512.close();
+				throw new DigestException("Firma hash sha512 no coincide.");
+			}
+		} else {
+			br256.close();
+			br512.close();
+			throw new DigestException("Firma hash sha256 no coincide.");
+		}
+	}
 	
 	public void decrypt()
 	{
-		PrincipalSheet s = new PrincipalSheet();
 		FileNameExtensionFilter filter = new FileNameExtensionFilter("Archivo cifrado de BrookieCrypt", "enc");
-		boolean status = openFile("Abrir archivo para descifrar (.enc)", filter);
-		if (!status) {
-			return;
-		}
-
 		try {
+			openFile("Abrir archivo para descifrar (.enc)", filter);
+			verifySums();
 			String path = file.getAbsolutePath();
 			ext = path.substring(path.lastIndexOf('.'), path.length());
 			File destFile = new File(path.replace(ext, ".zip"));
@@ -198,9 +266,11 @@ public class ManageCrypt
 			descompress();
 		} catch (IOException e) {
 			JOptionPane.showMessageDialog(s, e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-		} catch (GeneralSecurityException e) {
+		} catch (DigestException e) {
 			JOptionPane.showMessageDialog(s, e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-		}
+		} catch (GeneralSecurityException e) {
+			JOptionPane.showMessageDialog(s, e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);			
+		} catch (CancellationException e) {}
 	}
 
 	public void destroyFiles()
@@ -208,7 +278,8 @@ public class ManageCrypt
 		
 	}
 
-	private boolean openFile(@NonNull String titleWindow, @Nullable FileNameExtensionFilter filter)
+	private void openFile(@NonNull String titleWindow, @Nullable FileNameExtensionFilter filter)
+	throws CancellationException, IOException
 	{
 		JFileChooser chooser;
 		String path = "";
@@ -223,21 +294,14 @@ public class ManageCrypt
 		if (filter != null) {
 			chooser.setFileFilter(filter);
 		}
-		int status = chooser.showOpenDialog(new PrincipalSheet());
+		int status = chooser.showOpenDialog(s);
 		if (status != JFileChooser.APPROVE_OPTION) {
-			return false;
+			throw new CancellationException("Elección de archivo cancelada.");
 		}
 		
 		file = chooser.getSelectedFile();
 		if (!file.exists()) {
-			try {
-				file.createNewFile();
-			} catch (IOException e) {
-				JOptionPane.showMessageDialog(null, "Ocurrió un error en la creación del archivo.",
-				"Error", JOptionPane.ERROR_MESSAGE);
-				return false;
-			}
+			file.createNewFile();
 		}
-		return true;
 	}
 }
