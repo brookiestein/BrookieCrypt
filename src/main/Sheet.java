@@ -42,7 +42,7 @@ class PrincipalSheet extends JPanel
 {
 	private static final long serialVersionUID = 1L;
 	private static final String name = "BrookieCrypt";
-	private static final String version = "0.0.1";
+	private static final String version = "0.0.2";
 	private static final String license = "GNU GPL v2";
 	private static final String author = "Lord Brookie";
 
