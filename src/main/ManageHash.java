@@ -48,6 +48,7 @@ public class ManageHash
 	private byte[] buffer, shasum;
 	private int byteRead;
 	private String algorithm, finalOutput;
+	private final String errorAlgorithm = "Algoritmo no encontrado.";
 	private Component parent;
 
 	public ManageHash()
@@ -129,7 +130,7 @@ public class ManageHash
 			finalOutput = bi.toString(16);
 			is.close();
 		} catch (NoSuchAlgorithmException e) {
-			JOptionPane.showMessageDialog(parent, "Algoritmo no encontrado.", "Error", JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(parent, errorAlgorithm, "Error", JOptionPane.ERROR_MESSAGE);
 		}
 	}
 

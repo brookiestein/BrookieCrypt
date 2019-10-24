@@ -25,6 +25,7 @@ import java.io.IOException;
 
 // Paquetes SECURITY
 import java.security.GeneralSecurityException;
+import java.security.NoSuchAlgorithmException;
 import java.security.DigestException;
 
 // Paquetes UTIL
@@ -49,7 +50,7 @@ import org.eclipse.jdt.annotation.Nullable;
 
 public class ManageCrypt
 {
-	private File file;
+	private File file, originalFile, originalFileZip;
 	private String ext;
 	private ZipFile zipFile;
 	private ZipParameters zipParameters;
@@ -62,11 +63,23 @@ public class ManageCrypt
 		this.s = s;
 		ext = null;
 		file = null;
+		originalFile = null;
+		originalFileZip = null;
 		zipFile = null;
 		zipParameters = null;
 	}
+	
+	public File getOriginalFile()
+	{
+		return originalFile;
+	}
+	
+	public File getOriginalFileZip()
+	{
+		return originalFileZip;
+	}
 
-	private void compress() throws ZipException
+	private void compress() throws ZipException, CancellationException
 	{
 		try {
 			openFile("Abrir archivo o directorio para comprimir en zip", null);
@@ -74,8 +87,10 @@ public class ManageCrypt
 			String password;
 			if (file.isFile()) {
 				ext = path.substring(path.lastIndexOf('.'), path.length());
+				originalFileZip = new File(file.getAbsolutePath().replace(ext, ".zip"));
 				zipFile = new ZipFile(file.getAbsolutePath().replace(ext, ".zip"));
 			} else {
+				originalFileZip = new File(file.getAbsolutePath() + ".zip");
 				zipFile = new ZipFile(file.getAbsolutePath() + ".zip");
 			}
 			zipParameters = new ZipParameters();
@@ -97,7 +112,7 @@ public class ManageCrypt
 			}
 		} catch (IOException e) {
 			JOptionPane.showMessageDialog(s, e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-		} catch (CancellationException e) {}
+		}
 	}
 
 	private void descompress()
@@ -193,92 +208,77 @@ public class ManageCrypt
 			JOptionPane.showMessageDialog(s, e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
 		}
 	}
-
-	private void verifySums() throws IOException, DigestException
+	
+	public void verifyHash(@NonNull String algorithm, boolean showMessage)
+	throws IOException, DigestException, NoSuchAlgorithmException
 	{
 		String path = file.getAbsolutePath();
 		ext = path.substring(path.lastIndexOf('.'), path.length());
-
-		File filesha256 = new File(path.replace(ext, ".sha256sum"));
-		File filesha512 = new File(path.replace(ext, ".sha512sum"));
-
-		if (!filesha256.exists() || !filesha512.exists()) {
-			throw new IOException("Archivo(s) de firma hash no encontrado(s).");
+		File fileHash;
+		if (algorithm.equals(SHA256)) {
+			fileHash = new File(path.replace(ext, ".sha256sum"));
+		} else if (algorithm.equals(SHA512)) {
+			fileHash = new File(path.replace(ext, ".sha512sum"));
+		} else {
+			throw new NoSuchAlgorithmException("Algoritmo: \"" + algorithm + "\" no válido.");
 		}
-
-		FileReader fr256 = new FileReader(filesha256);
-		BufferedReader br256 = new BufferedReader(fr256);
-		String tmp, read256 = null;
-		
-		FileReader fr512 = new FileReader(filesha512);
-		BufferedReader br512 = new BufferedReader(fr512);
-		String read512 = null;
-
-		while ((tmp = br256.readLine()) != null) {
-			if (tmp != null) {
-				read256 = tmp;
-			}
+		if (!fileHash.exists()) {
+			throw new IOException("Archivo de firma hash " + algorithm + " no encontrado.");
 		}
-		while ((tmp = br512.readLine()) != null) {
-			if (tmp != null) {
-				read512 = tmp;
-			}
-		}
-
+		FileReader fr = new FileReader(fileHash);
+		BufferedReader br = new BufferedReader(fr);
+		String read = br.readLine();
+		br.close();
 		ManageHash hash = new ManageHash();
 		hash.setFile(file);
-		hash.setAlgorithm(SHA256);
+		hash.setAlgorithm(algorithm);
 		hash.setParent(s);
 		hash.createHash();
 		String originalHash = hash.getHash();
-		if (originalHash.equals(read256)) {
-			hash.setAlgorithm(SHA512);
-			hash.createHash();
-			originalHash = hash.getHash();
-			if (originalHash.equals(read512)) {
-				br256.close();
-				br512.close();
-			} else {
-				br256.close();
-				br512.close();
-				throw new DigestException("Firma hash sha512 no coincide.");
-			}
-		} else {
-			br256.close();
-			br512.close();
-			throw new DigestException("Firma hash sha256 no coincide.");
+		if (!originalHash.equals(read)) {
+			throw new DigestException("Firma hash " + algorithm + " no coincide.");
+		} else if (showMessage) {
+			JOptionPane.showMessageDialog(s, "Las firmas hash " + algorithm + " coinciden.",
+			"Enhorabuena", JOptionPane.INFORMATION_MESSAGE);
 		}
 	}
-	
+
 	public void decrypt()
 	{
 		FileNameExtensionFilter filter = new FileNameExtensionFilter("Archivo cifrado de BrookieCrypt", "enc");
 		try {
 			openFile("Abrir archivo para descifrar (.enc)", filter);
-			verifySums();
+			verifyHash(SHA256, false);
+			verifyHash(SHA512, false);
 			String path = file.getAbsolutePath();
 			ext = path.substring(path.lastIndexOf('.'), path.length());
 			File destFile = new File(path.replace(ext, ".zip"));
+			path = destFile.getAbsolutePath();
 			String password = GetPassword("Introduzca la contraseña de cifrado:");
 			FEncryptor fe = new FEncryptor(password);
 			fe.decrypt(file, destFile);
-			file = new File(destFile.getAbsolutePath());
+			file = new File(path);
 			descompress();
+			originalFileZip = new File(path);
 		} catch (IOException e) {
 			JOptionPane.showMessageDialog(s, e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
 		} catch (DigestException e) {
 			JOptionPane.showMessageDialog(s, e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
 		} catch (GeneralSecurityException e) {
 			JOptionPane.showMessageDialog(s, e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);			
-		} catch (CancellationException e) {}
+		}
 	}
 
-	public void destroyFiles()
+	public void destroyFiles(@NonNull File file)
 	{
-		
+		try {
+			DestroyFiles.destroy(file);
+		} catch (IOException e) {
+			JOptionPane.showMessageDialog(s, e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+		}
 	}
 
-	private void openFile(@NonNull String titleWindow, @Nullable FileNameExtensionFilter filter)
+	public void openFile(@NonNull String titleWindow, @Nullable FileNameExtensionFilter filter)
 	throws CancellationException, IOException
 	{
 		JFileChooser chooser;
@@ -298,10 +298,11 @@ public class ManageCrypt
 		if (status != JFileChooser.APPROVE_OPTION) {
 			throw new CancellationException("Elección de archivo cancelada.");
 		}
-		
+
 		file = chooser.getSelectedFile();
 		if (!file.exists()) {
 			file.createNewFile();
 		}
+		originalFile = new File(file.getAbsolutePath());
 	}
 }

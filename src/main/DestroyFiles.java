@@ -17,22 +17,26 @@
 */
 package main;
 
+// Paquetes IO
+import java.io.File;
+import java.io.FileWriter;
+import java.io.BufferedWriter;
+import java.io.IOException;
+
+// Paquetes Annotation
+import org.eclipse.jdt.annotation.NonNull;
+
 public class DestroyFiles
 {
-
+	public static void destroy(@NonNull File file) throws IOException
+	{
+		FileWriter fw = new FileWriter(file);
+		BufferedWriter bw = new BufferedWriter(fw);
+		for (int i = 0; i < (int) file.length(); i++) {
+			bw.write(0);
+		}
+		bw.flush();
+		bw.close();
+		file.delete();
+	}
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
