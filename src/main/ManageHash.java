@@ -35,6 +35,7 @@ import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
+// Paquetes SWING
 import javax.swing.JOptionPane;
 
 // Paquetes Annotation
@@ -119,7 +120,7 @@ public class ManageHash
 	public void createHash() throws IOException
 	{
 		is = new FileInputStream(file);
-		buffer = new byte[(int) file.length()];
+		buffer = new byte[4096];
 		try {
 			md = MessageDigest.getInstance(algorithm);
 			while (0 < (byteRead = is.read(buffer))) {

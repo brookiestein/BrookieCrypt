@@ -125,7 +125,7 @@ public class ManageCrypt
 			if (zipFile.isValidZipFile()) {
 				zipFile.extractAll(path.replace(ext, ""));
 			} else {
-				JOptionPane.showMessageDialog(s, messageError, "Error", JOptionPane.ERROR_MESSAGE);
+				throw new ZipException(messageError);
 			}
 		} else {
 			throw new CancellationException("Descompresión cancelada.");
@@ -230,8 +230,8 @@ public class ManageCrypt
 	
 	public void decrypt() throws IOException, DigestException, GeneralSecurityException, CancellationException
 	{
-		verifyHash(SHA256, false);
-		verifyHash(SHA512, false);
+		//verifyHash(SHA256, false);
+		//verifyHash(SHA512, false);
 		String path = file.getAbsolutePath();
 		ext = path.substring(path.lastIndexOf('.'), path.length());
 		File destFile = new File(path.replace(ext, ".zip"));
@@ -255,7 +255,7 @@ public class ManageCrypt
 		}
 	}
 
-	public void openFile(@NonNull String titleWindow, @Nullable FileNameExtensionFilter filter)
+	public void openFile(@NonNull String titleWindow, @Nullable FileNameExtensionFilter filter, int selectMode)
 	throws CancellationException, IOException
 	{
 		JFileChooser chooser;
@@ -267,7 +267,7 @@ public class ManageCrypt
 		}
 		chooser = new JFileChooser(path);
 		chooser.setDialogTitle(titleWindow);
-		chooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
+		chooser.setFileSelectionMode(selectMode);
 		if (filter != null) {
 			chooser.setFileFilter(filter);
 		}

@@ -19,9 +19,12 @@ package main;
 
 // Paquetes IO
 import java.io.File;
-import java.io.FileWriter;
-import java.io.BufferedWriter;
+import java.io.FileOutputStream;
+import java.io.BufferedOutputStream;
 import java.io.IOException;
+
+// Paquetes Util
+import java.util.Random;
 
 // Paquetes Annotation
 import org.eclipse.jdt.annotation.NonNull;
@@ -30,14 +33,27 @@ public class DestroyFiles
 {
 	public static void destroy(@NonNull File file) throws IOException
 	{
-		FileWriter fw = new FileWriter(file);
-		BufferedWriter bw = new BufferedWriter(fw);
-		int lenFile = (int) file.length();
-		for (int i = 0; i < lenFile; i++) {
-			bw.write(0);
+		FileOutputStream fos = new FileOutputStream(file);
+		BufferedOutputStream bos = new BufferedOutputStream(fos);
+		long lenFile = file.length();
+		byte bw[] = new byte[1];
+		for (long i = 0; i < lenFile; i++) {
+			for (long j = 0; j < lenFile; j++) {
+				for (long k = 0; j < lenFile; k++) {
+					bw[0] = (byte) getAleatoryNumber((int) ((int) Math.random() % (Math.random() % Integer.MAX_VALUE)));
+					bos.write(bw, 0, (int) k);
+				}
+			}
 		}
-		bw.flush();
-		bw.close();
+		bos.flush();
+		bos.close();
 		file.delete();
+	}
+	
+	public static int getAleatoryNumber(int limit)
+	{
+		Random rnd = new Random(System.currentTimeMillis());
+		int value = rnd.nextInt(limit);
+		return value;
 	}
 }
