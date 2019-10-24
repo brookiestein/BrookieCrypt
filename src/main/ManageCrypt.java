@@ -79,65 +79,56 @@ public class ManageCrypt
 		return originalFileZip;
 	}
 
-	private void compress() throws ZipException, CancellationException
+	public void compress(@NonNull File file) throws ZipException, CancellationException
 	{
-		try {
-			openFile("Abrir archivo o directorio para comprimir en zip", null);
-			String path = file.getAbsolutePath();
-			String password;
+		this.file = file;
+		String path = file.getAbsolutePath();
+		String password;
+		if (file.isFile()) {
+			ext = path.substring(path.lastIndexOf('.'), path.length());
+			originalFileZip = new File(file.getAbsolutePath().replace(ext, ".zip"));
+			zipFile = new ZipFile(file.getAbsolutePath().replace(ext, ".zip"));
+		} else {
+			originalFileZip = new File(file.getAbsolutePath() + ".zip");
+			zipFile = new ZipFile(file.getAbsolutePath() + ".zip");
+		}
+		zipParameters = new ZipParameters();
+		zipParameters.setCompressionMethod(Zip4jConstants.COMP_DEFLATE);
+		zipParameters.setCompressionLevel(Zip4jConstants.DEFLATE_LEVEL_ULTRA);
+		zipParameters.setEncryptFiles(true);
+		zipParameters.setEncryptionMethod(Zip4jConstants.ENC_METHOD_AES);
+		zipParameters.setAesKeyStrength(Zip4jConstants.AES_STRENGTH_256);
+		password = GetPassword("Introduzca la contraseña para el cifrado y compresión ZIP:");
+		if (password != null && !password.equals("")) {
+			zipParameters.setPassword(password);
 			if (file.isFile()) {
-				ext = path.substring(path.lastIndexOf('.'), path.length());
-				originalFileZip = new File(file.getAbsolutePath().replace(ext, ".zip"));
-				zipFile = new ZipFile(file.getAbsolutePath().replace(ext, ".zip"));
+				zipFile.addFile(file, zipParameters);
 			} else {
-				originalFileZip = new File(file.getAbsolutePath() + ".zip");
-				zipFile = new ZipFile(file.getAbsolutePath() + ".zip");
+				zipFile.addFolder(path, zipParameters);
 			}
-			zipParameters = new ZipParameters();
-			zipParameters.setCompressionMethod(Zip4jConstants.COMP_DEFLATE);
-			zipParameters.setCompressionLevel(Zip4jConstants.DEFLATE_LEVEL_ULTRA);
-			zipParameters.setEncryptFiles(true);
-			zipParameters.setEncryptionMethod(Zip4jConstants.ENC_METHOD_AES);
-			zipParameters.setAesKeyStrength(Zip4jConstants.AES_STRENGTH_256);
-			password = GetPassword("Introduzca la contraseña para el cifrado y compresión ZIP:");
-			if (password != null && !password.equals("")) {
-				zipParameters.setPassword(password);
-				if (file.isFile()) {
-					zipFile.addFile(file, zipParameters);
-				} else {
-					zipFile.addFolder(path, zipParameters);
-				}
-			} else {
-				JOptionPane.showMessageDialog(s, "Compresión cancelada.", "Error", JOptionPane.INFORMATION_MESSAGE);
-			}
-		} catch (IOException e) {
-			JOptionPane.showMessageDialog(s, e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+		} else {
+			throw new CancellationException("Compresión cancelada debido a la ausencia de contraseña.");
 		}
 	}
 
-	private void descompress()
+	public void descompress() throws ZipException, CancellationException
 	{
-		final String messageSuccess = "Descompresión finalizada.";
 		final String messageError = "El archivo indicado no parece ser un archivo zip válido.\n" +
 		"¿Estará corrupto?";
-		try {
-			String path = file.getAbsolutePath();
-			ext = path.substring(path.lastIndexOf('.'), path.length());
-			String password = GetPassword("Introduzca la contraseña para la descompresión ZIP:");
-			if (password != null) {
-				zipFile = new ZipFile(path);
-				zipFile.setPassword(password);
-				if (zipFile.isValidZipFile()) {
-					zipFile.extractAll(path.replace(ext, ""));
-					JOptionPane.showMessageDialog(s, messageSuccess, "Enhorabuena", JOptionPane.INFORMATION_MESSAGE);
-				} else {
-					JOptionPane.showMessageDialog(s, messageError, "Error", JOptionPane.ERROR_MESSAGE);
-				}
+		String path = file.getAbsolutePath();
+		ext = path.substring(path.lastIndexOf('.'), path.length());
+		String password = GetPassword("Introduzca la contraseña para la descompresión ZIP:");
+		if (password != null) {
+			originalFileZip = new File(path.replace(ext, ".zip"));
+			zipFile = new ZipFile(path);
+			zipFile.setPassword(password);
+			if (zipFile.isValidZipFile()) {
+				zipFile.extractAll(path.replace(ext, ""));
 			} else {
-				JOptionPane.showMessageDialog(s, "Descompresión cancelada.", "Error", JOptionPane.INFORMATION_MESSAGE);
+				JOptionPane.showMessageDialog(s, messageError, "Error", JOptionPane.ERROR_MESSAGE);
 			}
-		} catch (ZipException e) {
-			JOptionPane.showMessageDialog(s, e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+		} else {
+			throw new CancellationException("Descompresión cancelada.");
 		}
 	}
 	
@@ -171,12 +162,10 @@ public class ManageCrypt
 		}
 	}
 
-	public void encrypt()
+	public void encrypt() throws CancellationException
 	{
-		String messageError = "Ocurrió un error mientras se comprimía ";
 		final String messageSuccess = "El archivo ha sido cifrado.";
 		try {
-			compress();
 			String path = file.getAbsolutePath();
 			File destFile;
 			if (file.isFile()) {
@@ -190,18 +179,14 @@ public class ManageCrypt
 				destFile = new File(file.getAbsolutePath() + ".enc");
 			}
 			String password = GetPassword("Introduzca la contraseña para el cifrado:");
+			if (password == null) {
+				throw new CancellationException("Cifrado cancelado debido a la ausencia de contraseña.");
+			}
 			FEncryptor fe = new FEncryptor(password);
 			fe.encrypt(file, destFile);
 			generateSum(SHA256);
 			generateSum(SHA512);
 			JOptionPane.showMessageDialog(s, messageSuccess, "Enhorabuena", JOptionPane.INFORMATION_MESSAGE);
-		} catch (ZipException e) {
-			if (file.isFile()) {
-				messageError += "el archivo.";
-			} else {
-				messageError += "la carpeta.";
-			}
-			JOptionPane.showMessageDialog(s, messageError, "Error", JOptionPane.ERROR_MESSAGE);
 		} catch (GeneralSecurityException e) {
 			JOptionPane.showMessageDialog(s, e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
 		} catch (IOException e) {
@@ -242,31 +227,23 @@ public class ManageCrypt
 			"Enhorabuena", JOptionPane.INFORMATION_MESSAGE);
 		}
 	}
-
-	public void decrypt()
+	
+	public void decrypt() throws IOException, DigestException, GeneralSecurityException, CancellationException
 	{
-		FileNameExtensionFilter filter = new FileNameExtensionFilter("Archivo cifrado de BrookieCrypt", "enc");
-		try {
-			openFile("Abrir archivo para descifrar (.enc)", filter);
-			verifyHash(SHA256, false);
-			verifyHash(SHA512, false);
-			String path = file.getAbsolutePath();
-			ext = path.substring(path.lastIndexOf('.'), path.length());
-			File destFile = new File(path.replace(ext, ".zip"));
-			path = destFile.getAbsolutePath();
-			String password = GetPassword("Introduzca la contraseña de cifrado:");
-			FEncryptor fe = new FEncryptor(password);
-			fe.decrypt(file, destFile);
-			file = new File(path);
-			descompress();
-			originalFileZip = new File(path);
-		} catch (IOException e) {
-			JOptionPane.showMessageDialog(s, e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-		} catch (DigestException e) {
-			JOptionPane.showMessageDialog(s, e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-		} catch (GeneralSecurityException e) {
-			JOptionPane.showMessageDialog(s, e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);			
+		verifyHash(SHA256, false);
+		verifyHash(SHA512, false);
+		String path = file.getAbsolutePath();
+		ext = path.substring(path.lastIndexOf('.'), path.length());
+		File destFile = new File(path.replace(ext, ".zip"));
+		path = destFile.getAbsolutePath();
+		String password = GetPassword("Introduzca la contraseña de cifrado:");
+		if (password == null) {
+			throw new CancellationException("Descifrado cancelado debido a la ausencia de contraseña.");
 		}
+		FEncryptor fe = new FEncryptor(password);
+		fe.decrypt(file, destFile);
+		file = new File(path);
+		originalFileZip = new File(path);
 	}
 
 	public void destroyFiles(@NonNull File file)

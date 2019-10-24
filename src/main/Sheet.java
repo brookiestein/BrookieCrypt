@@ -19,8 +19,12 @@ package main;
 
 // Paquetes IO
 import java.io.IOException;
+
+// Paquetes Security
 import java.security.DigestException;
+import java.security.GeneralSecurityException;
 import java.security.NoSuchAlgorithmException;
+
 // Paquetes UTIL
 import java.util.ArrayList;
 import java.util.concurrent.CancellationException;
@@ -44,14 +48,18 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
+// Paquetes Annotation
 import org.eclipse.jdt.annotation.NonNull;
+
+import net.lingala.zip4j.exception.ZipException;
 
 class PrincipalSheet extends JPanel
 {
 	private static final long serialVersionUID = 1L;
 	private static final String name = "BrookieCrypt";
-	private static final String version = "0.0.3";
+	private static final String version = "0.0.4";
 	private static final String license = "GNU GPL v2";
 	private static final String author = "Lord Brookie";
 
@@ -67,6 +75,7 @@ class PrincipalSheet extends JPanel
 	private JButton election;
 	private final String crypt = "Cifrar un archivo o directorio";
 	private final String decrypt = "Descifrar un archivo";
+	private String frag, messageCompress, messageDescompress, messageCipher, messageDecipher, messageDestroy;
 	
 	public PrincipalSheet()
 	{		
@@ -77,6 +86,14 @@ class PrincipalSheet extends JPanel
 		
 		text = new JLabel("¿Qué desea hacer?");
 		text.setBounds(370, 130, 150, 20);
+		
+		messageCompress = "Espere un momento mientras se comprime el archivo. Esto puede tardar " +
+		"un tiempo, dependiendo el tamaño del archivo.";
+		frag = messageCompress.substring(messageCompress.indexOf('.') + 1, messageCompress.length());
+		messageDescompress = "Espere un momento mientras se descomprime el archivo. " + frag;
+		messageCipher = "Espere un momento mientras se cifra el archivo. " + frag;
+		messageDecipher = "Espere un momento mientras se descifra el  archivo." + frag;
+		messageDestroy = "Espere un momento mientras se destruye el archivo. "  + frag;
 		
 		items = new ArrayList<JMenuItem>();
 		addItem("Salir (CTRL + Q)");
@@ -186,6 +203,8 @@ class PrincipalSheet extends JPanel
 					JOptionPane.ERROR_MESSAGE);
 				}
 			} else if (e.isControlDown() && e.getKeyCode() == KeyEvent.VK_D) {
+				decrypt();
+				/*
 				if (!message.getText().equals("")) {
 					message.setText("");
 				}
@@ -201,6 +220,7 @@ class PrincipalSheet extends JPanel
 					JOptionPane.showMessageDialog(new PrincipalSheet(), ex.getMessage(), "Error",
 					JOptionPane.ERROR_MESSAGE);
 				}
+				*/
 			} else if (e.isControlDown() && e.getKeyCode() == KeyEvent.VK_I) {
 				showInfo();
 			}
@@ -211,29 +231,15 @@ class PrincipalSheet extends JPanel
 			if (e.getSource().equals(items.get(0))) {
 				exit();
 			} else if (e.getSource().equals(items.get(1))) {
-				if (!message.getText().equals("")) {
-					message.setText("");
-				}
-				try {
-					ec.encrypt();
-					if (checkDeleteFile.isSelected()) {
-						message.setText("Espere un momento mientras se destruyen los archivos (Esto " +
-						"puede tardar mucho dependiendo del tamaño de los archivos).");
-						ec.destroyFiles(ec.getOriginalFile());
-						ec.destroyFiles(ec.getOriginalFileZip());
-						message.setText("¡Archivo destruido!");
-					}
-				} catch (CancellationException ex) {
-					JOptionPane.showMessageDialog(new PrincipalSheet(), ex.getMessage(), "Error",
-					JOptionPane.ERROR_MESSAGE);
-				}
-				//ec.encrypt();
+				encrypt();
 			} else if (e.getSource().equals(items.get(3))) {
+				decrypt();
+				/*
 				if (!message.getText().equals("")) {
 					message.setText("");
 				}
 				try {
-					ec.decrypt();
+					//ec.decrypt();
 					if (checkDeleteFile.isSelected()) {
 						message.setText("Espere un momento mientras se destruye el archivo. Esto " +
 						"puede tardar mucho dependiendo del tamaño del archivo.");
@@ -244,30 +250,14 @@ class PrincipalSheet extends JPanel
 					JOptionPane.showMessageDialog(new PrincipalSheet(), ex.getMessage(), "Error",
 					JOptionPane.ERROR_MESSAGE);
 				}
-				//ec.decrypt();
+				*/
 			} else if (e.getSource().equals(election)) {
 				String selection = combo.getSelectedItem().toString();
 				if (selection.equals(crypt)) {
-					if (!message.getText().equals("")) {
-						message.setText("");
-					}
-					try {
-						ec.encrypt();
-						if (checkDeleteFile.isSelected()) {
-							message.setText("Espere un momento mientras se destruyen los archivos (Esto " +
-							"puede tardar mucho dependiendo del tamaño de los archivos).");
-							ec.destroyFiles(ec.getOriginalFile());
-							ec.destroyFiles(ec.getOriginalFileZip());
-							message.setText("¡Archivo destruido!");
-						}
-					} catch (CancellationException ex) {
-						JOptionPane.showMessageDialog(new PrincipalSheet(), ex.getMessage(), "Error",
-						JOptionPane.ERROR_MESSAGE);
-					}
+					encrypt();
 				} else if (selection.equals(decrypt)) {
-					if (!message.getText().equals("")) {
-						message.setText("");
-					}
+					decrypt();
+					/*
 					try {
 						ec.decrypt();
 						if (checkDeleteFile.isSelected()) {
@@ -280,6 +270,7 @@ class PrincipalSheet extends JPanel
 						JOptionPane.showMessageDialog(new PrincipalSheet(), ex.getMessage(), "Error",
 						JOptionPane.ERROR_MESSAGE);
 					}
+					*/
 				} else if (selection.equals("Destruir archivo(s)")) {
 					destroyFile();
 				} else if (selection.equalsIgnoreCase("Verificar firma hash sha256")) {
@@ -300,14 +291,12 @@ class PrincipalSheet extends JPanel
 			}
 		}
 
-		@Override
 		public void mouseClicked(MouseEvent e)
 		{
 			if (!message.getText().equals("")) {
 				message.setText("");
 			}
 		}
-
 		public void mousePressed(MouseEvent e) {}
 		public void mouseReleased(MouseEvent e) {}
 		public void mouseEntered(MouseEvent e) {}
@@ -322,6 +311,93 @@ class PrincipalSheet extends JPanel
 		JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
 		if (ask == JOptionPane.OK_OPTION) {
 			System.exit(0);
+		}
+	}
+	
+	private void encrypt()
+	{
+		if (!message.getText().equals("")) {
+			message.setText("");
+		}
+		try {
+			ec.openFile("Abrir archivo para comprimir en ZIP", null);
+			message.setText(messageCompress);
+			ec.compress(ec.getOriginalFile());
+			message.setText(messageCipher);
+			ec.encrypt();
+			if (checkDeleteFile.isSelected()) {
+				message.setText(messageDestroy);
+				ec.destroyFiles(ec.getOriginalFile());
+				ec.destroyFiles(ec.getOriginalFileZip());
+				message.setText("¡Archivo destruido!");
+			}
+		} catch (CancellationException ex) {
+			if (!message.getText().equals("")) {
+				message.setText("");
+			}
+			JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+		} catch (IOException ex) {
+			if (!message.getText().equals("")) {
+				message.setText("");
+			}
+			JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+		} catch (ZipException ex) {
+			if (!message.getText().equals("")) {
+				message.setText("");
+			}
+			JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+		} catch (Exception ex) {
+			JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+		}
+	}
+	
+	private void decrypt()
+	{
+		if (!message.getText().equals("")) {
+			message.setText("");
+		}
+		try {
+			FileNameExtensionFilter filter = new FileNameExtensionFilter("Archivo cifrado de " +
+			"BrookieCrypt", "enc");
+			ec.openFile("Abrir archivo para descifrar (.enc)", filter);
+			message.setText(messageDecipher);
+			ec.decrypt();
+			message.setText(messageDescompress);
+			ec.descompress();
+			if (checkDeleteFile.isSelected()) {
+				message.setText(messageDestroy);
+				ec.destroyFiles(ec.getOriginalFileZip());
+				message.setText("¡Archivo destruido!");
+			}
+			JOptionPane.showMessageDialog(this, "Descifrado finalizado.", "En hora buena",
+			JOptionPane.INFORMATION_MESSAGE);
+		} catch (IOException ex) {
+			if (!message.getText().equals("")) {
+				message.setText("");
+			}
+			JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+		} catch (CancellationException ex) {
+			if (!message.getText().equals("")) {
+				message.setText("");
+			}
+			JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+		} catch (ZipException ex) {
+			if (!message.getText().equals("")) {
+				message.setText("");
+			}
+			JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+		} catch (DigestException ex) {
+			if (!message.getText().equals("")) {
+				message.setText("");
+			}
+			JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+		} catch (GeneralSecurityException ex) {
+			if (!message.getText().equals("")) {
+				message.setText("");
+			}
+			JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+		} catch (Exception ex) {
+			JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
 		}
 	}
 	
@@ -347,7 +423,6 @@ class PrincipalSheet extends JPanel
 			JOptionPane.showMessageDialog(this, e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
 		}
 	}
-	
 
 	private void verifySums(@NonNull String algorithm)
 	{

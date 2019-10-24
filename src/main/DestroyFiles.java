@@ -32,7 +32,8 @@ public class DestroyFiles
 	{
 		FileWriter fw = new FileWriter(file);
 		BufferedWriter bw = new BufferedWriter(fw);
-		for (int i = 0; i < (int) file.length(); i++) {
+		int lenFile = (int) file.length();
+		for (int i = 0; i < lenFile; i++) {
 			bw.write(0);
 		}
 		bw.flush();

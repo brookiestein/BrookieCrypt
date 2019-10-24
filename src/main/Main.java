@@ -30,7 +30,7 @@ public class Main
 	private static final int y = 150;
 	private static final int width = 886;
 	private static final int height = 473;
-	private static final String version = "0.0.3";
+	private static final String version = "0.0.4";
 	public static void main(String[] args)
 	{
 		PrincipalSheet s = new PrincipalSheet();
