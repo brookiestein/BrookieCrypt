@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 19aa Lord Brookie
  * Este programa es software libre. Puede redistribuirlo y/o
- * modificarlo bajo los términos de la Licencia P�blica General
+ * modificarlo bajo los términos de la Licencia Pública General
  * de GNU según es publicada por la Free Software Foundation,
  * bien de la versión 2 de dicha Licencia o bien --según su
  * elección-- de cualquier versión posterior.
