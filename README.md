@@ -14,7 +14,6 @@ AES 256 bits
 **Librerías utilizadas:**
 ```
 Zip4j
-Apache Commons IO
 Se utiliza código de Encrypt4j no la biblioteca completa. Dónde se utiliza
 se le da créditos al autor en el texto de COPYRIGHT.
 ```
