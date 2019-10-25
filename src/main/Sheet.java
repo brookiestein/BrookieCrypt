@@ -1,16 +1,16 @@
 /*
  * Copyright (C) 19aa Lord Brookie
  * Este programa es software libre. Puede redistribuirlo y/o
- * modificarlo bajo los tÈrminos de la Licencia P˙blica General
- * de GNU seg˙n es publicada por la Free Software Foundation,
- * bien de la versiÛn 2 de dicha Licencia o bien --seg˙n su
- * elecciÛn-- de cualquier versiÛn posterior.
+ * modificarlo bajo los t√©rminos de la Licencia PÔøΩblica General
+ * de GNU seg√∫n es publicada por la Free Software Foundation,
+ * bien de la versi√≥n 2 de dicha Licencia o bien --seg√∫n su
+ * elecci√≥n-- de cualquier versi√≥n posterior.
  * Este programa se distribuye con la esperanza de que sea
- * ˙til, pero SIN NINGUNA GARANTÕA, incluso sin la garantÌa
- * MERCANTIL implÌcita o sin garantizar la CONVENIENCIA PARA UN
- * PROP”SITO PARTICULAR. Para m·s detalles, vÈase la Licencia
- * P˙blica General de GNU.
- * DeberÌa haber recibido una copia de la Licencia P˙blica
+ * √∫til, pero SIN NINGUNA GARANT√çA, incluso sin la garant√≠a
+ * MERCANTIL impl√≠cita o sin garantizar la CONVENIENCIA PARA UN
+ * PROP√ìSITO PARTICULAR. Para m√°s detalles, v√©ase la Licencia
+ * P√∫blica General de GNU.
+ * Deber√≠a haber recibido una copia de la Licencia P√∫blica
  * General junto con este programa. En caso contrario, escriba
  * a la Free Software Foundation, Inc., en 675 Mass Ave,
  * Cambridge, MA 02139, EEUU.
@@ -87,11 +87,11 @@ class PrincipalSheet extends JPanel
 		setFocusable(true);
 		addKeyListener(listener);
 
-		text = new JLabel("øQuÈ desea hacer?");
+		text = new JLabel("¬øQu√© desea hacer?");
 		text.setBounds(370, 130, 150, 20);
 
 		messageCompress = "Espere un momento mientras se comprime el archivo. Esto puede tardar " +
-		"un tiempo, dependiendo el tamaÒo del archivo.";
+		"un tiempo, dependiendo el tama√±o del archivo.";
 		frag = messageCompress.substring(messageCompress.indexOf('.') + 1, messageCompress.length());
 		messageDescompress = "Espere un momento mientras se descomprime el archivo. " + frag;
 		messageCipher = "Espere un momento mientras se cifra el archivo. " + frag;
@@ -198,10 +198,10 @@ class PrincipalSheet extends JPanel
 					ec.encrypt();
 					if (checkDeleteFile.isSelected()) {
 						message.setText("Espere un momento mientras se destruyen los archivos (Esto " +
-						"puede tardar mucho dependiendo del tamaÒo de los archivos).");
+						"puede tardar mucho dependiendo del tamaÔøΩo de los archivos).");
 						ec.destroyFiles(ec.getOriginalFile());
 						ec.destroyFiles(ec.getOriginalFileZip());
-						message.setText("°Archivos destruidos!");
+						message.setText("¬°Archivos destruidos!");
 					} 
 				} catch (CancellationException ex) {
 					JOptionPane.showMessageDialog(new PrincipalSheet(), ex.getMessage(), "Error",
@@ -262,7 +262,7 @@ class PrincipalSheet extends JPanel
 
 	private void exit()
 	{
-		final String message = "øEst· seguro que desea salir?";
+		final String message = "¬øEst√° seguro que desea salir?";
 		final String title = "Salida";
 		int ask = JOptionPane.showConfirmDialog(this, message, title,
 		JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
@@ -286,7 +286,7 @@ class PrincipalSheet extends JPanel
 				message.setText(messageDestroy);
 				ec.destroyFiles(ec.getOriginalFile());
 				ec.destroyFiles(ec.getOriginalFileZip());
-				message.setText("°Archivo destruido!");
+				message.setText("¬°Archivo destruido!");
 			}
 		} catch (CancellationException ex) {
 			if (!message.getText().equals("")) {
@@ -326,7 +326,7 @@ class PrincipalSheet extends JPanel
 			if (checkDeleteFile.isSelected()) {
 				message.setText(messageDestroy);
 				ec.destroyFiles(ec.getOriginalFileZip());
-				message.setText("°Archivo destruido!");
+				message.setText("ÔøΩArchivo destruido!");
 			}
 			JOptionPane.showMessageDialog(this, "Descifrado finalizado.", "Enhorabuena", JOptionPane.INFORMATION_MESSAGE);
 		} catch (IOException ex) {
@@ -366,15 +366,9 @@ class PrincipalSheet extends JPanel
 				message.setText("");
 			}
 			ec.openFile("Abrir archivo para destruirlo", null, JFileChooser.FILES_ONLY);
-			if (ec.getOriginalFile().isFile()) {
-				message.setText("Espere un momento mientras se destruye el archivo. Esto " +
-				"puede tardar mucho dependiendo del tamaÒo de archivo.");
-			} else {
-				message.setText("Espere un momento mientras se destruyen los archivos. Esto " +
-				"puede tardar mucho dependiendo del tamaÒo de los archivos.");
-			}
+			message.setText(messageDestroy);
 			ec.destroyFiles(ec.getOriginalFile());
-			message.setText("°Archivo(s) destruido(s)!");
+			message.setText("¬°Archivo(s) destruido(s)!");
 		} catch (IOException e) {
 			JOptionPane.showMessageDialog(this, e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
 		} catch (CancellationException e) {
@@ -388,7 +382,7 @@ class PrincipalSheet extends JPanel
 			ec.openFile("Abrir archivo firmado", null, JFileChooser.FILES_ONLY);
 			message.setText(messageHash);
 			ec.verifyHash(algorithm, true);
-			message.setText("°Firmas hash verificadas!");
+			message.setText("¬°Firmas hash verificadas!");
 		} catch (IOException e) {
 			JOptionPane.showMessageDialog(this, e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
 		} catch (CancellationException e) {
@@ -405,17 +399,17 @@ class PrincipalSheet extends JPanel
 		final String TITLE = "Ayuda de BrookieCrypt";
 		final String GITHUB = "https://github.com/brookiestein/BrookieCrypt";
 		final String GITLAB = "https://gitlab.com/LordBrookie/BrookieCrypt";
-		final String MESSAGE = "CÛmo utilizar BrookieCrypt est· detallado en un archivo: \"DOCUMENTATION\"\n" +
-		"que deberÌa de habÈrsele suministrado al momento de la obtenciÛn de este software.\n" +
-		"Si ese no fue el caso, tambiÈn puede leer dicho documento, entre otras cosas en las siguientes p·ginas:\n" +
+		final String MESSAGE = "C√≥mo utilizar BrookieCrypt est√° detallado en un archivo: \"DOCUMENTATION\"\n" +
+		"que deber√≠a de hab√©rsele suministrado al momento de la obtenci√≥n de este software.\n" +
+		"Si ese no fue el caso, tambi√©n puede leer dicho documento, entre otras cosas en las siguientes p√°ginas:\n" +
 		GITHUB + "\n" + GITLAB;
 		JOptionPane.showMessageDialog(this, MESSAGE, TITLE, JOptionPane.INFORMATION_MESSAGE);
 	}
 
 	private void showInfo()
 	{
-		final String title = "InformaciÛn - " + name;
-		final String message = String.format("Nombre de software: %s\n\nVersiÛn: %s\n\nLicencia: %s\n\nAutor: %s\n\n",
+		final String title = "Informaci√≥n - " + name;
+		final String message = String.format("Nombre de software: %s\n\nVersi√≥n: %s\n\nLicencia: %s\n\nAutor: %s\n\n",
 		name, version, license, author);
 		JOptionPane.showMessageDialog(this, message, title, JOptionPane.INFORMATION_MESSAGE);
 	}

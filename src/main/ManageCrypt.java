@@ -1,16 +1,16 @@
 /*
  * Copyright (C) 19aa Lord Brookie
  * Este programa es software libre. Puede redistribuirlo y/o
- * modificarlo bajo los tÈrminos de la Licencia P˙blica General
- * de GNU seg˙n es publicada por la Free Software Foundation,
- * bien de la versiÛn 2 de dicha Licencia o bien --seg˙n su
- * elecciÛn-- de cualquier versiÛn posterior.
+ * modificarlo bajo los t√©rminos de la Licencia PÔøΩblica General
+ * de GNU seg√∫n es publicada por la Free Software Foundation,
+ * bien de la versi√≥n 2 de dicha Licencia o bien --seg√∫n su
+ * elecci√≥n-- de cualquier versi√≥n posterior.
  * Este programa se distribuye con la esperanza de que sea
- * ˙til, pero SIN NINGUNA GARANTÕA, incluso sin la garantÌa
- * MERCANTIL implÌcita o sin garantizar la CONVENIENCIA PARA UN
- * PROP”SITO PARTICULAR. Para m·s detalles, vÈase la Licencia
- * P˙blica General de GNU.
- * DeberÌa haber recibido una copia de la Licencia P˙blica
+ * √∫til, pero SIN NINGUNA GARANT√çA, incluso sin la garant√≠a
+ * MERCANTIL impl√≠cita o sin garantizar la CONVENIENCIA PARA UN
+ * PROP√ìSITO PARTICULAR. Para m√°s detalles, v√©ase la Licencia
+ * P√∫blica General de GNU.
+ * Deber√≠a haber recibido una copia de la Licencia P√∫blica
  * General junto con este programa. En caso contrario, escriba
  * a la Free Software Foundation, Inc., en 675 Mass Ave,
  * Cambridge, MA 02139, EEUU.
@@ -98,7 +98,7 @@ public class ManageCrypt
 		zipParameters.setEncryptFiles(true);
 		zipParameters.setEncryptionMethod(Zip4jConstants.ENC_METHOD_AES);
 		zipParameters.setAesKeyStrength(Zip4jConstants.AES_STRENGTH_256);
-		password = GetPassword("Introduzca la contraseÒa para el cifrado y compresiÛn ZIP:");
+		password = GetPassword("Introduzca la contrase√±a para el cifrado y compresi√≥n ZIP:");
 		if (password != null && !password.equals("")) {
 			zipParameters.setPassword(password);
 			if (file.isFile()) {
@@ -107,17 +107,17 @@ public class ManageCrypt
 				zipFile.addFolder(path, zipParameters);
 			}
 		} else {
-			throw new CancellationException("CompresiÛn cancelada debido a la ausencia de contraseÒa.");
+			throw new CancellationException("Compresi√≥n cancelada debido a la ausencia de contrase√±a.");
 		}
 	}
 
 	public void descompress() throws ZipException, CancellationException
 	{
-		final String messageError = "El archivo indicado no parece ser un archivo zip v·lido.\n" +
-		"øEstar· corrupto?";
+		final String messageError = "El archivo indicado no parece ser un archivo zip v√°lido.\n" +
+		"¬øEstar√° corrupto?";
 		String path = file.getAbsolutePath();
 		ext = path.substring(path.lastIndexOf('.'), path.length());
-		String password = GetPassword("Introduzca la contraseÒa para la descompresiÛn ZIP:");
+		String password = GetPassword("Introduzca la contrase√±a para la descompresi√≥n ZIP:");
 		if (password != null) {
 			originalFileZip = new File(path.replace(ext, ".zip"));
 			zipFile = new ZipFile(path);
@@ -128,16 +128,16 @@ public class ManageCrypt
 				throw new ZipException(messageError);
 			}
 		} else {
-			throw new CancellationException("DescompresiÛn cancelada.");
+			throw new CancellationException("Descompresi√≥n cancelada.");
 		}
 	}
 	
 	private String GetPassword(@NonNull String message)
 	{
 		ArrayList<String> messages = new ArrayList<String>();
-		messages.add("La contraseÒa es demasiado dÈbil.");
+		messages.add("La contraseÔøΩa es demasiado d√©bil.");
 		messages.add(message);
-		messages.add("Establecer contraseÒa");
+		messages.add("Establecer contrase√±a");
 		messages.add("Error");
 		while (true) {
 			String input = JOptionPane.showInputDialog(s, messages.get(1), messages.get(2), JOptionPane.PLAIN_MESSAGE);
@@ -178,9 +178,9 @@ public class ManageCrypt
 				}
 				destFile = new File(file.getAbsolutePath() + ".enc");
 			}
-			String password = GetPassword("Introduzca la contraseÒa para el cifrado:");
+			String password = GetPassword("Introduzca la contrase√±a para el cifrado:");
 			if (password == null) {
-				throw new CancellationException("Cifrado cancelado debido a la ausencia de contraseÒa.");
+				throw new CancellationException("Cifrado cancelado debido a la ausencia de contrase√±a.");
 			}
 			FEncryptor fe = new FEncryptor(password);
 			fe.encrypt(file, destFile);
@@ -205,7 +205,7 @@ public class ManageCrypt
 		} else if (algorithm.equals(SHA512)) {
 			fileHash = new File(path.replace(ext, ".sha512sum"));
 		} else {
-			throw new NoSuchAlgorithmException("Algoritmo: \"" + algorithm + "\" no v·lido.");
+			throw new NoSuchAlgorithmException("Algoritmo: \"" + algorithm + "\" no v√°lido.");
 		}
 		if (!fileHash.exists()) {
 			throw new IOException("Archivo de firma hash " + algorithm + " no encontrado.");
@@ -230,15 +230,13 @@ public class ManageCrypt
 	
 	public void decrypt() throws IOException, DigestException, GeneralSecurityException, CancellationException
 	{
-		//verifyHash(SHA256, false);
-		//verifyHash(SHA512, false);
 		String path = file.getAbsolutePath();
 		ext = path.substring(path.lastIndexOf('.'), path.length());
 		File destFile = new File(path.replace(ext, ".zip"));
 		path = destFile.getAbsolutePath();
-		String password = GetPassword("Introduzca la contraseÒa de cifrado:");
+		String password = GetPassword("Introduzca la contrase√±a de cifrado:");
 		if (password == null) {
-			throw new CancellationException("Descifrado cancelado debido a la ausencia de contraseÒa.");
+			throw new CancellationException("Descifrado cancelado debido a la ausencia de contrase√±a.");
 		}
 		FEncryptor fe = new FEncryptor(password);
 		fe.decrypt(file, destFile);
@@ -273,7 +271,7 @@ public class ManageCrypt
 		}
 		int status = chooser.showOpenDialog(s);
 		if (status != JFileChooser.APPROVE_OPTION) {
-			throw new CancellationException("ElecciÛn de archivo cancelada.");
+			throw new CancellationException("Elecci√≥n de archivo cancelada.");
 		}
 
 		file = chooser.getSelectedFile();
