@@ -33,10 +33,13 @@ se le da créditos al autor en el texto de COPYRIGHT.
 
 **Cómo ejecutar:**
 
-1- Si está utilizando un sistema Microsoft Windows, descargue el archivo binario «BrookieCrypt-Setup» e instálelo.
+1- Si está utilizando un sistema Microsoft Windows, descargue el archivo binario 
+[«BrookieCrypt-Setup»](https://github.com/brookiestein/BrookieCrypt/blob/master/bin/BrookieCrypt-Setup.exe?raw=true)
+e instálelo.
 
 2- Si está utilizando un sistema basado en UNIX, por ejemplo: Mac OS o GNU/Linux, descargue el archivo binario 
-«BrookieCrypt.jar», abra una sesión en una consola y ejecute las siguientes órdenes:
+[«BrookieCrypt.jar»](https://github.com/brookiestein/BrookieCrypt/blob/master/bin/BrookieCrypt.jar?raw=true), 
+abra una sesión en una consola y ejecute las siguientes órdenes:
 ```
 $ java -jar BrookieCrypt.jar
 ```
