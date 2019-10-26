@@ -43,3 +43,4 @@ abra una sesión en una consola y ejecute las siguientes órdenes:
 ```
 $ java -jar BrookieCrypt.jar
 ```
+Nota: En un sistema Microsoft Windows también se puede utilizar este último método.
