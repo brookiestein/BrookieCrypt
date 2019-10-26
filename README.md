@@ -30,3 +30,13 @@ Zip4j
 Se utiliza código de Encrypt4j no la biblioteca completa. Dónde se utiliza
 se le da créditos al autor en el texto de COPYRIGHT.
 ```
+
+**Cómo ejecutar:**
+
+1- Si está utilizando un sistema Microsoft Windows, descargue el archivo binario «BrookieCrypt-Setup» e instálelo.
+
+2- Si está utilizando un sistema basado en UNIX, por ejemplo: Mac OS o GNU/Linux, descargue el archivo binario 
+«BrookieCrypt.jar», abra una sesión en una consola y ejecute las siguientes órdenes:
+```
+$ java -jar BrookieCrypt.jar
+```
