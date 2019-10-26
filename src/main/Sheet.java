@@ -75,8 +75,10 @@ class PrincipalSheet extends JPanel
 	private JPanel s, s2;
 	private ManageCrypt ec;
 	private JButton election;
-	private final String crypt = "Cifrar un archivo o directorio";
-	private final String decrypt = "Descifrar un archivo";
+	private static final String SHA256 = "SHA-256";
+	private static final String SHA512 = "SHA-512";
+	private static final String crypt = "Cifrar un archivo o directorio";
+	private static final String decrypt = "Descifrar un archivo";
 	private String frag, messageCompress, messageDescompress, messageCipher, messageDecipher, messageDestroy;
 	private String messageHash;
 	
@@ -106,10 +108,10 @@ class PrincipalSheet extends JPanel
 		addItem("Descifrar un archivo (CTRL + D)");
 		addItem(decrypt);
 		addItem("Acerca de (CTRL + I)");
-		addItem("Destruir archivo(s)");
-		addItem("Verificar firma hash sha256");
-		addItem("Verificar firma hash sha512");
-		addItem("Ayuda");
+		addItem("Destruir un archivo (CTRL + 1)");
+		addItem("Verificar firma hash sha256 (CTRL + 2)");
+		addItem("Verificar firma hash sha512 (CTRL + 3)");
+		addItem("Ayuda (F1)");
 
 		combo = new JComboBox<String>();
 		combo.addItem("Nada");
@@ -191,24 +193,17 @@ class PrincipalSheet extends JPanel
 			if (e.isControlDown() && e.getKeyCode() == KeyEvent.VK_Q) {
 				exit();
 			} else if (e.isControlDown() && e.getKeyCode() == KeyEvent.VK_E) {
-				if (!message.getText().equals("")) {
-					message.setText("");
-				}
-				try {
-					ec.encrypt();
-					if (checkDeleteFile.isSelected()) {
-						message.setText("Espere un momento mientras se destruyen los archivos (Esto " +
-						"puede tardar mucho dependiendo del tama�o de los archivos).");
-						ec.destroyFiles(ec.getOriginalFile());
-						ec.destroyFiles(ec.getOriginalFileZip());
-						message.setText("¡Archivos destruidos!");
-					} 
-				} catch (CancellationException ex) {
-					JOptionPane.showMessageDialog(new PrincipalSheet(), ex.getMessage(), "Error",
-					JOptionPane.ERROR_MESSAGE);
-				}
+				encrypt();
 			} else if (e.isControlDown() && e.getKeyCode() == KeyEvent.VK_D) {
 				decrypt();
+			} else if (e.isControlDown() && e.getKeyCode() == KeyEvent.VK_1) {
+				destroyFile();
+			} else if (e.isControlDown() && e.getKeyCode() == KeyEvent.VK_2) {
+				verifySums(SHA256);
+			} else if (e.isControlDown() && e.getKeyCode() == KeyEvent.VK_3) {
+				verifySums(SHA512);
+			} else if (e.getKeyCode() == KeyEvent.VK_F1) {
+				showHelp();
 			} else if (e.isControlDown() && e.getKeyCode() == KeyEvent.VK_I) {
 				showInfo();
 			}
@@ -233,16 +228,16 @@ class PrincipalSheet extends JPanel
 				} else if (selection.equals("Destruir archivo(s)")) {
 					destroyFile();
 				} else if (selection.equalsIgnoreCase("Verificar firma hash sha256")) {
-					verifySums("SHA-256");
+					verifySums(SHA256);
 				} else if (selection.equalsIgnoreCase("Verificar firma hash sha512")) {
-					verifySums("SHA-512");
+					verifySums(SHA512);
 				}
 			} else if (e.getSource().equals(items.get(6))) {
 				destroyFile();
 			} else if (e.getSource().equals(items.get(7))) {
-				verifySums("SHA-256");
+				verifySums(SHA256);
 			} else if (e.getSource().equals(items.get(8))) {
-				verifySums("SHA-512");
+				verifySums(SHA512);
 			} else {
 				showInfo();
 			}
@@ -317,8 +312,8 @@ class PrincipalSheet extends JPanel
 			FileNameExtensionFilter filter = new FileNameExtensionFilter("Archivo cifrado de BrookieCrypt", "enc");
 			message.setText(messageHash);
 			ec.openFile("Abrir archivo para descifrar (.enc)", filter, JFileChooser.FILES_ONLY);
-			ec.verifyHash("SHA-256", false);
-			ec.verifyHash("SHA-512", false);
+			ec.verifyHash(SHA256, false);
+			ec.verifyHash(SHA512, false);
 			message.setText(messageDecipher);
 			ec.decrypt();
 			message.setText(messageDescompress);
@@ -326,7 +321,7 @@ class PrincipalSheet extends JPanel
 			if (checkDeleteFile.isSelected()) {
 				message.setText(messageDestroy);
 				ec.destroyFiles(ec.getOriginalFileZip());
-				message.setText("�Archivo destruido!");
+				message.setText("¡Archivo destruido!");
 			}
 			JOptionPane.showMessageDialog(this, "Descifrado finalizado.", "Enhorabuena", JOptionPane.INFORMATION_MESSAGE);
 		} catch (IOException ex) {
@@ -340,10 +335,13 @@ class PrincipalSheet extends JPanel
 			}
 			JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
 		} catch (ZipException ex) {
+			final String messageError = "Se ha producido un error mientras se intentaba descomprimir:\n" +
+			ec.getOriginalFileZip() + ".\nPor favor, verifique que la contraseña es correcta e intente " +
+			"nuevamente.";
 			if (!message.getText().equals("")) {
 				message.setText("");
 			}
-			JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(this, messageError, "Error", JOptionPane.ERROR_MESSAGE);
 		} catch (DigestException ex) {
 			if (!message.getText().equals("")) {
 				message.setText("");
@@ -368,7 +366,7 @@ class PrincipalSheet extends JPanel
 			ec.openFile("Abrir archivo para destruirlo", null, JFileChooser.FILES_ONLY);
 			message.setText(messageDestroy);
 			ec.destroyFiles(ec.getOriginalFile());
-			message.setText("¡Archivo(s) destruido(s)!");
+			message.setText("¡Archivo destruido!");
 		} catch (IOException e) {
 			JOptionPane.showMessageDialog(this, e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
 		} catch (CancellationException e) {

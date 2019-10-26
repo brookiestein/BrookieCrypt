@@ -135,7 +135,7 @@ public class ManageCrypt
 	private String GetPassword(@NonNull String message)
 	{
 		ArrayList<String> messages = new ArrayList<String>();
-		messages.add("La contrase�a es demasiado débil.");
+		messages.add("La contraseña es demasiado débil.");
 		messages.add(message);
 		messages.add("Establecer contraseña");
 		messages.add("Error");
